@@ -3,7 +3,8 @@ import { Document } from "@langchain/core/documents";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 const model = genAI.getGenerativeModel({
-  model: "gemini-1.5-flash",
+  // model: "gemini-1.5-flash",
+  model: "gemini-2.0-flash",
 });
 
 export const aISummariseCommit = async (diff: string) => {
@@ -43,33 +44,79 @@ export const aISummariseCommit = async (diff: string) => {
   return response.response.text();
 };
 
+//original method
+// export async function summariseCode(doc: Document) {
+//   console.log("getting summary for", doc.metadata.source);
+//   try{
+//   const code = doc.pageContent.slice(0, 10000); // Limit to 10000 characters
 
-export async function summariseCode(doc: Document) {
+//   const response = await model.generateContent([
+//       `You are an intelligent senior software engineer who specialises in onboarding junior software engineers onto projects.
+//       You are onboarding a junior software engineer and explaining to them the purpose of the ${doc.metadata.source} file.
+//       Here is the code:
+//       ${code}
+//       Give a summary no more than 100 words of the code above`,
+//     ]);
+
+//   return response.response.text();
+//   }
+//   catch(error) {
+//     console.error("Error generating summary:", error);
+//     throw error; // Rethrow the error to handle it in the calling function
+//     // return '';
+//   }
+// }
+
+export async function summariseCode(
+  doc: Document,
+  maxRetries = 3,
+  initialDelay = 20000,
+) {
   console.log("getting summary for", doc.metadata.source);
-  const code = doc.pageContent.slice(0, 10000); // Limit to 10000 characters
-  
-  const response = await model.generateContent([
-      `You are an intelligent senior software engineer who specialises in onboarding junior software engineers onto projects.
-      You are onboarding a junior software engineer and explaining to them the purpose of the ${doc.metadata.source} file.
-      Here is the code:
-      ${code}
-      Give a summary no more than 100 words of the code above`,
-    ]);
+  let retries = 0;
 
-  return response.response.text();
+  while (retries <= maxRetries) {
+    try {
+      const code = doc.pageContent.slice(0, 10000); // Limit to 10000 characters
+
+      const response = await model.generateContent([
+        `You are an intelligent senior software engineer who specialises in onboarding junior software engineers onto projects.
+        You are onboarding a junior software engineer and explaining to them the purpose of the ${doc.metadata.source} file.
+        Here is the code:
+        ${code}
+        Give a summary no more than 100 words of the code above`,
+      ]);
+
+      return response.response.text();
+    } catch (error: any) {
+      if (error.status === 429 && retries < maxRetries) {
+        // Exponential backoff
+        const delay = initialDelay * Math.pow(2, retries);
+        console.log(`Rate limited. Retrying in ${delay / 1000} seconds...`);
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        retries++;
+      } else {
+        console.error("Error generating summary:", error);
+        // For non-rate limit errors or if max retries reached, return a default message
+        return `Failed to generate summary for ${doc.metadata.source}. Please check logs for details.`;
+      }
+    }
+  }
+
+  // If we've exhausted all retries
+  return `Unable to generate summary for ${doc.metadata.source} after ${maxRetries} attempts.`;
 }
 
 export async function generateEmbedding(summary: string) {
   const model = genAI.getGenerativeModel({
-      model: "text-embedding-004"
+    model: "text-embedding-004",
   });
   const result = await model.embedContent(summary);
-  const embedding=result.embedding;
+  const embedding = result.embedding;
   return embedding.values;
 }
 
-console.log(await generateEmbedding("Hello World!"));
-
+// console.log(await generateEmbedding("Hello World!"));
 
 // console.log(await aISummariseCommit(`diff --git a/src/app/(protected)/dashboard/page.tsx b/src/app/(protected)/dashboard/page.tsx
 // index 160248c..8a52acd 100644
