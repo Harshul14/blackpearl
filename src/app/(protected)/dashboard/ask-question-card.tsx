@@ -56,10 +56,11 @@ const AskQuestionCard = () => {
             <div className="items center flex gap-2">
               <DialogTitle>
                 <Image
-                  src="/png-transparent-dinobots-predacons-transformers-decepticon-logo-insignia-digital-leaf-orange-logo.png"
+                  src="/favicon.png"
                   alt="Black Pearl"
                   width={40}
                   height={40}
+                  style={{ borderRadius: '50%' }}
                 />
               </DialogTitle>
               {/* <Button variant={'outline'}>Save Answer</Button> */}

@@ -58,10 +58,11 @@ export function AppSideBar() {
       <SidebarHeader>
         <div className="flex items-center gap-2">
           <Image
-            src="/png-transparent-dinobots-predacons-transformers-decepticon-logo-insignia-digital-leaf-orange-logo.png"
+            src="/favicon.png"
             alt="logo"
             width={40}
             height={40}
+            style={{ borderRadius: '50%' }}
           />
           {open && (
             <h1 className="text-x1 text-primary/80 font-bold">Black Pearl</h1>
