@@ -5,7 +5,7 @@ import { Slider } from "@/components/ui/slider";
 import { createCheckoutSession } from "@/lib/stripe";
 import { api } from "@/trpc/react";
 import { Info } from "lucide-react";
-import React from "react"; // 6.9k (gzipped: 2.7k)
+import React from "react";
 
 const BillingPage = () => {
   const { data: user } = api.project.getMyCredits.useQuery();

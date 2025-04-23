@@ -4,8 +4,8 @@ import { Input } from "@/components/ui/input";
 import useRefetch from "@/hooks/use-refetch";
 import { api } from "@/trpc/react";
 import { Info } from "lucide-react";
-import React, { use } from "react"; // 6.9k [gzipped: 2.7k]
-import { useForm } from "react-hook-form"; // 21.5k [gzipped: 8k]
+import React, { use } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 type FormInput = {
@@ -20,7 +20,6 @@ const CreatePage = () => {
   const checkCredits = api.project.checkCredits.useMutation();
   const refetch = useRefetch();
   function onSubmit(data: FormInput) {
-    // window.alert(JSON.stringify(data, null, 2));
     if (!!checkCredits.data) {
       createProject.mutate(
         {
