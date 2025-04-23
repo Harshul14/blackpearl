@@ -24,13 +24,6 @@ const getFileCount = async (
     let fileCount = 0;
     const directories: string[] = [];
 
-    // for (const item of data) {
-    //   if (item.type === "file") {
-    //     fileCount++;
-    //   } else if (item.type === "dir") {
-    //     directories.push(item.path);
-    //   }
-    // }
     for (const item of data) {
       if (item.type === "dir") {
         directories.push(item.path);
@@ -46,11 +39,6 @@ const getFileCount = async (
       );
       fileCount += directoryCounts.reduce((acc, count) => acc + count, 0);
     }
-    // Recursively process directories
-    // for (const dir of directories) {
-    //   fileCount += await getFileCount(dir, octokit, githubOwner, githubRepo);
-    // }
-
     return acc + fileCount;
   }
 
@@ -74,10 +62,52 @@ export const loadGithubRepo = async (
   githubUrl: string,
   githubToken?: string,
 ) => {
+  const githubOwner = githubUrl.split("/")[3];
+  const githubRepo = githubUrl.split("/")[4];
+
+  if (!githubOwner || !githubRepo) {
+    throw new Error("Invalid GitHub URL format");
+  }
+
+  const octokit = new Octokit({ auth: githubToken || "" });
+  let defaultBranch = "main";
+
+  try {
+    const { data: repoData } = await octokit.rest.repos.get({
+      owner: githubOwner,
+      repo: githubRepo,
+    });
+
+    defaultBranch = repoData.default_branch;
+  } catch (error) {
+    console.warn(
+      "Could not determine default branch, will try 'main' then 'master'",
+    );
+    try {
+      await octokit.rest.repos.getBranch({
+        owner: githubOwner,
+        repo: githubRepo,
+        branch: "main",
+      });
+      defaultBranch = "main";
+    } catch (mainError) {
+      try {
+        await octokit.rest.repos.getBranch({
+          owner: githubOwner,
+          repo: githubRepo,
+          branch: "master",
+        });
+        defaultBranch = "master";
+      } catch (masterError) {
+        throw new Error(
+          "Neither 'main' nor 'master' branches found in the repository",
+        );
+      }
+    }
+  }
   const loader = new GithubRepoLoader(githubUrl, {
     accessToken: githubToken || "",
-    branch: "main",
-    // branch: 'master',
+    branch: defaultBranch,
     ignoreFiles: [
       "package-lock.json",
       "yarn.lock",
@@ -132,7 +162,6 @@ const generateEmbeddings = async (docs: Document[]) => {
         embedding,
         sourceCode: JSON.parse(JSON.stringify(doc.pageContent)),
         fileName: doc.metadata.source,
-        // projectId // You might want to include projectId here from the outer function
       };
     }),
   );
