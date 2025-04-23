@@ -18,14 +18,6 @@ const firebaseConfig = {
   messagingSenderId: "64158028801",
   appId: "1:64158028801:web:3f3f113b8c9bdff6715c00",
 };
-// const firebaseConfig = {
-//     apiKey: "AIzaSyAs5SOHVdDXDwjzLhFXRNQONTc_0Q3L1qM",
-//     authDomain: "dionysus-yt.firebaseapp.com",
-//     projectId: "dionysus-yt",
-//     storageBucket: "dionysus-yt.firebasestorage.app",
-//     messagingSenderId: "294574424066",
-//     appId: "1:294574424066:web:9f028f2958cf265377a71b"
-// };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
